@@ -12,7 +12,6 @@ GRID_SIZE = 128
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
 ZOOM_STEP = 16
-CHARACTER_SIZE = (64, 64)
 
 # Set up asset directories
 ASSET_DIR = 'images'
@@ -32,17 +31,8 @@ def load_images():
     global images
     images = {terrain: pygame.transform.scale(pygame.image.load(os.path.join(ASSET_DIR, f'cube_{terrain}.png')).convert_alpha(), (TILE_SIZE, TILE_SIZE)) for terrain in TERRAIN_TYPES}
 
-
-def load_character_image():
-    character_path = os.path.join(ASSET_DIR, 'character.png')
-    return pygame.transform.smoothscale(
-        pygame.image.load(character_path).convert_alpha(),
-        CHARACTER_SIZE,
-    )
-
 # Load images initially
 load_images()
-character_image = load_character_image()
 
 # Function to handle zoom changes
 def handle_zoom():
@@ -88,22 +78,12 @@ class Camera:
 
 camera = Camera()
 
-
-class Character:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-
-
-character = Character(GRID_SIZE // 2, GRID_SIZE // 2)
-
 def draw_grid():
     window.fill((0, 0, 0))  # Clear the screen
 
     # Get the mouse position
     mouse_x, mouse_y = pygame.mouse.get_pos()
     hovered_block = None
-    character_screen_pos = None
 
     # Calculate how many blocks we need to draw based on TILE_SIZE and screen dimensions
     extra_tiles = 12
@@ -136,9 +116,6 @@ def draw_grid():
 
                     window.blit(images[block['terrain']], (blit_x, blit_y))
 
-                    if block['x'] == character.x and block['y'] == character.y:
-                        character_screen_pos = (blit_x, blit_y)
-
             # Move to the next tile position diagonally right and down
             x += TILE_SIZE // 2
             y += TILE_SIZE // 4
@@ -147,17 +124,9 @@ def draw_grid():
         initial_offset_x -= TILE_SIZE // 2
         initial_offset_y += TILE_SIZE // 4
 
-    if character_screen_pos:
-        char_x = character_screen_pos[0] + (TILE_SIZE // 2) - (CHARACTER_SIZE[0] // 2)
-        char_y = character_screen_pos[1] - CHARACTER_SIZE[1] + (TILE_SIZE // 2)
-        window.blit(character_image, (char_x, char_y))
-
     # Display camera position
     camera_text = font.render(f"Camera: ({camera.x}, {camera.y})", True, (255, 255, 255))
     window.blit(camera_text, (WINDOW_WIDTH - camera_text.get_width(), camera_text.get_height()))
-
-    player_text = font.render(f"Character: ({character.x}, {character.y})", True, (255, 255, 255))
-    window.blit(player_text, (WINDOW_WIDTH - player_text.get_width(), camera_text.get_height() * 2))
 
     # Display the coordinates of the hovered block
     if hovered_block:
@@ -188,22 +157,14 @@ while running:
             elif event.key == K_EQUALS:
                 TILE_SIZE += 8
                 handle_zoom()
-            elif event.key == K_UP:
+            elif event.key in [K_UP, K_w]:
                 camera.y -= 1
-            elif event.key == K_DOWN:
+            elif event.key in [K_DOWN, K_s]:
                 camera.y += 1
-            elif event.key == K_LEFT:
+            elif event.key in [K_LEFT, K_a]:
                 camera.x -= 1
-            elif event.key == K_RIGHT:
+            elif event.key in [K_RIGHT, K_d]:
                 camera.x += 1
-            elif event.key == K_w:
-                character.y = max(0, character.y - 1)
-            elif event.key == K_s:
-                character.y = min(GRID_SIZE - 1, character.y + 1)
-            elif event.key == K_a:
-                character.x = max(0, character.x - 1)
-            elif event.key == K_d:
-                character.x = min(GRID_SIZE - 1, character.x + 1)
 
         elif event.type == MOUSEBUTTONDOWN:
             if event.button == 4:  # Scroll up
